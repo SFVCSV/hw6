@@ -1,0 +1,425 @@
+
+(require 2htdp/image)
+(require 2htdp/universe)
+
+;; Instructions
+;; 1. Do not create, modify or delete any line that begins with ";;!". These are
+;;    markers that we use to segment your file into parts to facilitate grading.
+;; 2. You must follow the _design recipe_ for every problem. In particular,
+;;    every function you define must have at least three check-expects (and
+;;    more if needed).
+;; 3. You must follow the Style Guide:
+;;    https://pages.github.khoury.northeastern.edu/2500/2024F/style.html
+;; 4. You must submit working code. In DrRacket, ensure you get on errors
+;;    when you click Run. After you submit on Gradescope, you'll get instant
+;;    feedback on whether or Gradescope can run your code, and your code must
+;;    run on Gradescope to receive credit from the autograder.
+;; 5. On some problems, you can get automated feedback on your in-progress work
+;;    from FeedBot, a system developed by the course staff. When you submit your
+;;    assignment, you will see a link to the FeedBot report along with the autograder
+;;    feedback. Only a certain number of submissions will get this, and submissions
+;;    close together will not receive the feedback.
+
+;;! Problem 1
+
+;; Consider the three functions below (we have deliberately omitted tests and purpose
+;; statements):
+
+;; flip: [List-of Boolean] -> [List-of Boolean]
+(define (flip lob)
+  (cond
+    [(empty? lob) '()]
+    [(cons? lob) (cons (not (first lob)) (flip (rest lob)))]))
+
+;; until-zero: [List-of Number] -> [List-of Number]
+(define (until-zero lon)
+  (cond
+    [(empty? lon) '()]
+    [(cons? lon) (if (= (first lon) 0) '() (cons (first lon) (until-zero (rest lon))))]))
+
+;; words-until-period: [List-of String] -> [List-of String]
+(define (words-until-period los)
+  (cond
+    [(empty? los) '()]
+    [(cons? los)
+     (if (string=? (first los) ".") '() (cons (first los) (words-until-period (rest los))))]))
+
+;;! Part A
+
+;; It is possible to design a list abstraction that can be used to simplify two
+;; of the three functions defined above. Define that list abstraction. NOTE: you
+;; do not need to include a signature, or tests for this. While a purpose isn't
+;; required, thinking about it may be helpful.
+
+;;!! IMPORTANT: Write your response BELOW this line:
+
+(define (process-until list pred proc)
+  (cond
+    [(empty? list) '()]
+    [(cons? list)
+     (if (pred (first list))
+         '()
+         (cons (proc (first list)) (process-until (rest list) pred proc)))]))
+
+;;! Part B
+
+;; Use the list abstraction you designed in Part A to rewrite the functions
+;; above that you can. Do not modify the code above. Instead, write your
+;; functions here and call them flip/v2, until-zero/v2, or
+;; words-until-period/v2. Follow the full design recipe.
+
+;;!! IMPORTANT: Write your response BELOW this line:
+
+(define (negate-boolean x)
+  (not x))
+
+(define (always-false x)
+  #f)
+
+(define (is-zero x)
+  (= x 0))
+
+(define (same-number x)
+  x)
+
+(check-expect (flip '(#true #false #true)) '(#false #true #false))
+(check-expect (flip '()) '())
+(check-expect (flip '(#true)) '(#false))
+
+(check-expect (until-zero '(1 2 3 0 4 5)) '(1 2 3))
+(check-expect (until-zero '(0 1 2)) '())
+(check-expect (until-zero '(1 2 3)) '(1 2 3))
+
+;;! Problem 2
+
+;; In HW4, you designed a data definition that combined a Neighborhood with a
+;; count of people who used public transit in that neighborhood. In this
+;; problem, we are going to use a very similar data definition: this time add
+;; the total number of commuters of your neighborhood, not just the number who
+;; commute via public transit. We'll use this to build a simulation that can
+;; infer future information about a neighborhood based on its known data.
+
+;;! Part A
+
+;; Please copy your data definition from HW4, adjusting it if necessary based on
+;; feedback you received, and adding a field for the total _number_ of
+;; commuters. Adjust examples appropriately, looking up accurate numbers for
+;; your chosen neighborhoods.
+;;
+;; Name (or rename) your data definition NeighborhoodCommuters
+
+;;!! IMPORTANT: Write your response BELOW this line:
+
+;; NeighborhoodCommuters is a structure representing commuter information of a neighborhood:
+;; (make-neighborhood-commuters String Number Number)
+;;  name: the name of the neighborhood (String)
+;;  public-transit: the number of commuters using public transit (Number)
+;;  total-commuters: the total number of commuters in the neighborhood (Number)
+
+(define-struct neighborhood-commuters [name public-transit total-commuters])
+
+;; Signature: NeighborhoodCommuters
+;; Purpose: Represents a neighborhood's name, number of commuters using public transit,
+;; and the total number of commuters in the neighborhood.
+;; name is the name of the neighborhood (String)
+;; public-transit is the number of commuters using public transit
+;; total-commuters is the total number of commuters in the neighborhood
+
+(define fenway (make-neighborhood-commuters "Fenway" 6098 16196))
+
+(define back-bay (make-neighborhood-commuters "Back Bay" 2774 9929))
+
+(define allston (make-neighborhood-commuters "Allston" 5177 11579))
+
+(define downtown (make-neighborhood-commuters "Downtown" 758 3247))
+
+(define roxbury (make-neighborhood-commuters "Roxbury" 5387 14338))
+
+;; Signature: NeighborhoodCommuters -> String
+;; Purpose: Returns the name of the neighborhood
+(define (get-name nc)
+  (neighborhood-commuters-name nc))
+
+;; Signature: NeighborhoodCommuters -> Number
+;; Purpose: Returns the number of commuters using public transit in the neighborhood
+(define (get-public-transit nc)
+  (neighborhood-commuters-public-transit nc))
+
+;; Signature: NeighborhoodCommuters -> Number
+;; Purpose: Returns the total number of commuters in the neighborhood
+(define (get-total-commuters nc)
+  (neighborhood-commuters-total-commuters nc))
+
+;; Signature: NeighborhoodCommuters -> Number
+;; Purpose: Calculates the percentage of commuters using public transit
+(define (public-transit-percentage nc)
+  (/ (get-public-transit nc) (get-total-commuters nc)))
+
+;; Test cases 
+(check-expect (get-name fenway) "Fenway")
+(check-expect (get-name back-bay) "Back Bay")
+(check-expect (get-name roxbury) "Roxbury")
+
+(check-expect (get-public-transit fenway) 6098)
+(check-expect (get-public-transit back-bay) 2774)
+(check-expect (get-public-transit roxbury) 5387)
+
+(check-expect (get-total-commuters fenway) 16196)
+(check-expect (get-total-commuters downtown) 3247)
+(check-expect (get-total-commuters allston) 11579)
+
+(check-expect (public-transit-percentage fenway) (/ 6098 16196))
+(check-expect (public-transit-percentage back-bay) (/ 2774 9929))
+(check-expect (public-transit-percentage roxbury) (/ 5387 14338))
+
+;;! Part B
+
+;; Define a constant named _exactly_ `MY-NC-EXAMPLE` that has an example of your
+;; data definition. You should have more than one example above; this one can
+;; just be defined as a synonym of one of the above.
+
+;;!! IMPORTANT: Write your response BELOW this line:
+
+;; Signature: NeighborhoodCommuters
+;; Purpose: An example of the NeighborhoodCommuters structure.
+;; This constant is a synonym for the Fenway neighborhood data.
+
+(define MY-NC-EXAMPLE fenway)
+
+(check-expect (get-name MY-NC-EXAMPLE) "Fenway")
+
+;;! Part C
+
+;; We now want to represent multiple neighborhoods. Define a data definition for
+;; a collection of NeighborhoodCommuters called BostonCommuters. Note: use a
+;; list!
+
+;;!! IMPORTANT: Write your response BELOW this line:
+
+;; Data Definition: BostonCommuters
+;; A BostonCommuters is a list of NeighborhoodCommuters.
+;; It can be empty, or (cons NeighborhoodCommuters BostonCommuters)
+
+;; Signature: [List-of NeighborhoodCommuters]
+;; Purpose: Represents a collection of neighborhoods, where each neighborhood contains 
+;; the number of public transit commuters and total commuters.
+
+;; Example of BostonCommuters
+(define boston-commuters
+  (list fenway back-bay allston downtown roxbury))
+
+;; Signature: BostonCommuters -> Number
+;; Purpose: Calculate the total number of commuters in all neighborhoods of BostonCommuters.
+(define (total-commuters-in-boston bc)
+  (cond
+    [(empty? bc) 0]
+    [(cons? bc) (+ (get-total-commuters (first bc))
+                   (total-commuters-in-boston (rest bc)))]))
+
+;; Signature: BostonCommuters -> Number
+;; Purpose: Calculate the total number of public transit commuters in all neighborhoods of BostonCommuters.
+(define (total-public-transit-commuters-in-boston bc)
+  (cond
+    [(empty? bc) 0]
+    [(cons? bc) (+ (get-public-transit (first bc))
+                   (total-public-transit-commuters-in-boston (rest bc)))]))
+
+;; Tests for BostonCommuters
+(check-expect boston-commuters (list fenway back-bay allston downtown roxbury))
+
+;; Test for total-commuters-in-boston
+(check-expect (total-commuters-in-boston boston-commuters) 
+              (+ 16196 9929 11579 3247 14338))
+
+;; Test for total-public-transit-commuters-in-boston
+(check-expect (total-public-transit-commuters-in-boston boston-commuters) 
+              (+ 6098 2774 5177 758 5387))
+
+;;! Part D
+
+;; Define a constant named _exactly_ `MY-BC-EXAMPLE` that has an example of your
+;; data definition. You should have more than one example above; this one can
+;; just be defined as a synonym of the above.
+
+;;!! IMPORTANT: Write your response BELOW this line:
+
+;; Signature: BostonCommuters
+;; Purpose: An example of the BostonCommuters structure.
+;; This constant is a synonym for the boston-commuters data.
+
+(define MY-BC-EXAMPLE boston-commuters)
+(check-expect MY-BC-EXAMPLE (list fenway back-bay allston downtown roxbury))
+
+
+;;! Part E
+
+;; We want to use the known information about commuters who take public transportation
+;; in a neighborhood to derive the aggregate CO2 emissions at 10, 25, and 40 years
+;; into the future.
+
+;; Design a function `simulate-emissions` that takes a NeighborhoodCommuters and
+;; a number (representing years into the future) and returns the total amount of CO2
+;; emissions after the specified number of years _caused by commuting_. You are
+;; welcome to use the following simplified notes / assumptions:
+;;
+;; - You can consider all people who do not commute via public transit to
+;;   commute via car. If one of your neighborhoods is Longwood, perhaps choose a
+;;   different one!
+;;
+;; - A report from a few years ago stated the average commute time _by car_
+;;   in the Boston area was 40 mins, and another report we found said the average
+;;   distance of such commutes was 20 miles.
+;;
+;; - The average car emmits 400g of CO2 per mile driven. Feel free to ignore the
+;;   (likely) improvement of this average over time, due to electrification.
+;;
+;; - You can ignore change in population over time for your simulation. Just assume
+;;   the value you calculate for the first year is the same for the subsequent ones.
+;;
+;; - You can assume commuters go to work every day!
+
+;;!! IMPORTANT: Write your response BELOW this line:
+
+;; Signature: NeighborhoodCommuters Number -> Number
+;; Purpose: Calculate the total CO2 emissions caused by non-public transit commuters 
+;; in the neighborhood for the specified number of years.
+
+(define (simulate-emissions nc years)
+  (let* ([car-commuters (- (get-total-commuters nc) (get-public-transit nc))]
+         [co2-per-day (* 20 0.4)]  ;; 20 mpd 0.4 kg CO2/mile
+         [co2-per-year (* co2-per-day 365)]  ;; emissions/y
+         [total-emissions (* car-commuters co2-per-year years)])  ;; total emissions
+    total-emissions))
+
+(check-expect (simulate-emissions fenway 10) (* (- 16196 6098) (* 20 0.4 365) 10))
+(check-expect (simulate-emissions back-bay 25) (* (- 9929 2774) (* 20 0.4 365) 25))
+(check-expect (simulate-emissions roxbury 40) (* (- 14338 5387) (* 20 0.4 365) 40))
+
+
+;;! Part F
+
+;; INTERPRETIVE QUESTION
+;;
+;; Imagine we're members of the Environmental Justice, Resiliency, and Parks committee
+;; (https://www.boston.gov/departments/city-council/environmental-justice-resiliency-and-parks)
+;; in Boston's city council. We want to fund the electrification of buses to
+;; communities who are most harmed by air pollution from gas buses. We need to
+;; find where pollutants are distributed.
+;;
+;; Our data currently tracks what percentage of neighborhood commuters take
+;; public transportation (for this question, let's assume they're all taking
+;; gas-powered buses).
+;;
+;; In 2-3 sentences, explain why our data does not track where air pollutants
+;; from buses are distributed. What sort of information would we need to
+;; estimate where gas buses spread air pollutants?
+
+;;!! IMPORTANT: Write your response BELOW this line:
+
+;; The data only shows how many people take public transit but doesn’t show where buses travel or emit pollutants.
+;; data more specific like bus routes/time spent/weather to estimate pollution distribution are encouraged to fix more specific prediction.
+
+
+;;! Part G
+
+;; Now, design a new draw function, `draw-boston-emissions`, that takes
+;; a BostonCommuters, a scale (0-1), and a number of years into the future and
+;; draws all of the neighborhoods colored-coded by the amount of CO2 emissions
+;; at that time caused by commuting.
+
+;; Hint: You will need to design a helper function that associates a color with the amount of
+;; CO2 emissions in a specific neighborhood, and should re-use past drawing functions you've implemented.
+
+;;!! IMPORTANT: Write your response BELOW this line:
+(require 2htdp/image)
+
+;; Signature: BostonCommuters Number -> Number
+;; Purpose: Find the maximum emissions among all neighborhoods in a list of BostonCommuters.
+(define (max-emissions bc years)
+  (cond
+    [(empty? bc) 0]
+    [else (max (simulate-emissions (first bc) years)
+               (max-emissions (rest bc) years))]))
+
+;; Signature: Number Number -> Color
+;; Purpose: Converts a CO2 emissions value into a color based on maximum emissions.
+(define (emissions-to-color emissions max-emissions)
+  (cond
+    [(= max-emissions 0) "white"]
+    [else (make-color 255
+                      (- 255 (min 255 (round (* 255 (/ emissions max-emissions)))))
+                      (- 255 (min 255 (round (* 255 (/ emissions max-emissions))))))]))
+
+;; Signature: NeighborhoodCommuters Number Number -> Image
+;; Purpose: Draw a neighborhood rectangle color-coded by CO2 emissions.
+(define (draw-neighborhood nc years max-emissions)
+  (rectangle 100 50 "solid"
+             (emissions-to-color (simulate-emissions nc years) max-emissions)))
+
+;; Signature: BostonCommuters Number Number -> Image
+;; Purpose: Draws all neighborhoods as rectangles, color-coded by their CO2 emissions.
+(define (draw-boston-emissions bc scale years)
+  (draw-boston-emissions-helper bc scale years (max-emissions bc years)))
+
+;; Signature: BostonCommuters Number Number Number -> Image
+;; Purpose: Helper function that draws neighborhoods recursively.
+(define (draw-boston-emissions-helper bc scale years max-emissions)
+  (cond
+    [(empty? bc) empty-image]
+    [else (beside
+           (draw-neighborhood (first bc) years (* max-emissions scale))
+           (draw-boston-emissions-helper (rest bc) scale years max-emissions))]))
+
+;; Test for max-emissions
+(check-expect (max-emissions boston-commuters 10) 
+              (max (simulate-emissions fenway 10)
+                   (simulate-emissions back-bay 10)
+                   (simulate-emissions allston 10)
+                   (simulate-emissions downtown 10)
+                   (simulate-emissions roxbury 10)))
+
+;; Tests for emissions-to-color
+(check-expect (emissions-to-color 5000 10000) (make-color 255 127 127))
+(check-expect (emissions-to-color 10000 10000) (make-color 255 0 0))
+(check-expect (emissions-to-color 0 10000) (make-color 255 255 255))
+
+;; Test for draw-boston-emissions
+(check-expect (image-width (draw-boston-emissions boston-commuters 1 10)) 500)
+(check-expect (image-height (draw-boston-emissions boston-commuters 1 10)) 50)
+
+;;! Part H
+
+;; INTERPRETIVE QUESTION
+
+;; Our estimate of commuters' CO2 emissions is based on public transportation
+;; data. However, public transportation commuters on average produce less than
+;; half as much CO2 compared to other commuters.
+;; (https://www.transit.dot.gov/sites/fta.dot.gov/files/docs/PublicTransportationsRoleInRespondingToClimateChange2010.pdf)
+;;
+;; In 2-3 sentences, identify which commuters we're leaving out of our
+;; calculation. If we were to rank neighborhoods by total carbon emissions, how
+;; might our calculation give an incomplete picture?
+
+;;!! IMPORTANT: Write your response BELOW this line:
+;; We’re leaving out public transit commuters who still emit CO2 though less than car commuters!!!
+;; This could underestimate total emissions and make neighborhoods with more transit users *seem* cleaner than they are.
+
+
+;;! Part I
+
+;; Finally, let's visualize these changes over time. Design a function
+;; `visualize-boston-emissions` that takes a single argument--a number of years in the
+;; future--and draws a collection of neighborhoods of your choice, colored according to
+;; the amount of emissions.
+;;
+;; NOTE: in the Interactions window, you can use `animate` from 2htdp/universe
+;; to run this function, but do not put it in the file as it may cause the
+;; autograder not to run.
+
+;;!! IMPORTANT: Write your response BELOW this line:
+
+;; Signature: Number -> Image
+;; Purpose: Visualize the CO2 emissions of BostonCommuters for a specified number of years in the future
+(define (visualize-boston-emissions years)
+  (draw-boston-emissions boston-commuters 1 years))
+(animate visualize-boston-emissions)
